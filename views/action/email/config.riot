@@ -1,0 +1,75 @@
+<action-email-config>
+  <div class={ `card card-flowing card-${props.getAction(props.action).color || 'primary'} mb-3` }>
+    <div class="card-header drag">
+      <div class="card-icon">
+        <i class={ props.getAction(props.action).icon } />
+      </div>
+
+      { props.getAction(props.action).title }
+    </div>
+    <div class="card-body">
+      <div class="mb-3">
+        <label class="form-label">
+          Email Recipient(s)
+        </label>
+        <input class="form-control" ref="to" value={ props.action.to || '' } type="text" onchange={ (e) => onChange(e) } />
+        <small>Seperate with <code>,</code></small>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">
+          Email Subject
+        </label>
+        <input class="form-control" ref="subject" value={ props.action.subject || '' } type="text" onchange={ (e) => onChange(e) } />
+      </div>
+      <div class="mb-3">
+        <label class="form-label">
+          Email Body
+        </label>
+        <editor ref={ ref('body') } content={ props.action.body || '' } on-change={ () => onChange() } show-toolbar={ true } />
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * export flow action email
+     */
+    export default class ActionEmailConfig {
+
+      /**
+       * on change timing
+       *
+       * @param {Event} e
+       */
+      onChange(e) {
+        // set element
+        this.props.set({
+          to      : this.$('[ref="to"]').value,
+          body    : this.refs.body.val(),
+          subject : this.$('[ref="subject"]').value,
+        });
+      }
+
+
+      // ////////////////////////////////////////////////////////////////////////////
+      //
+      // MISC METHODS
+      //
+      // ////////////////////////////////////////////////////////////////////////////
+
+      /**
+       * ref
+       */
+      ref(name) {
+        // set refs
+        if (!this.refs) this.refs = {};
+
+        // return ref function
+        return (that) => {
+          // set ref
+          this.refs[name] = that;
+        };
+      }
+    }
+  </script>
+</action-email-config>
