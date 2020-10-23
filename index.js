@@ -1,5 +1,9 @@
 // require first
-const axios = require('axios');
+const fs         = require('fs-extra');
+const transport  = require('nodemailer-mailgun-transport');
+const mjml2html  = require('mustache.mjml');
+const nodemailer = require('nodemailer');
+const htmlToText = require('html-to-text');
 const { Module } = require('@dashup/module');
 
 // import base
@@ -16,6 +20,17 @@ class PhoneModule extends Module {
   constructor() {
     // run super
     super();
+
+    // connect discord
+    this.building.then(() => {
+      // Build mailer
+      this.mailer = nodemailer.createTransport(transport({
+        auth : {
+          domain  : this.config.domain,
+          api_key : this.config.apiKey,
+        }
+      }));
+    });
   }
   
   /**
@@ -35,9 +50,50 @@ class PhoneModule extends Module {
    * @param from 
    * @param text 
    */
-  send(to, from, body) {
-    // await res
-    console.log(to, from, body);
+  async send(to, subject, body, data) {
+    // Make sure addresses is array
+    if (!Array.isArray(to)) to = [to];
+
+    // rendered
+    const { template, errors } = mjml2html((await fs.readFile('./emails/action.mjml', 'utf8')).replace('[[TEMPLATE]]', body));
+
+    // template with data
+    const email = template(data);
+
+    // Options
+    const options = {
+      to,
+      from : this.config.from,
+      html : email,
+      text : htmlToText.fromString(email, {
+        wordwrap : 130,
+      }),
+      subject : subject,
+    };
+
+    // info
+    let info = null;
+
+    // Run try/catch
+    try {
+      // Send mail with defined transport object
+      info = await new Promise((resolve, reject) => {
+        // Send mail
+        this.mailer.sendMail(options, (err, data) => {
+          // Check error
+          if (err) return reject(err);
+
+          // Resolve
+          return resolve(data);
+        });
+      });
+    } catch (e) {
+      // log error
+      console.log(e);
+    }
+
+    // Return email
+    return info;
   }
 }
 

@@ -1,19 +1,22 @@
 
 // import connect interface
+import handlebars from 'handlebars';
 import { Struct } from '@dashup/module';
 
 /**
  * build address helper
  */
 export default class EmailAction extends Struct {
+
   /**
-   * construct email connector
-   *
-   * @param args 
+   * construct
    */
   constructor(...args) {
-    // run super
+    // return
     super(...args);
+
+    // run listen
+    this.runAction = this.runAction.bind(this);
   }
 
   /**
@@ -37,7 +40,7 @@ export default class EmailAction extends Struct {
    */
   get icon() {
     // return connect icon label
-    return 'fa fa-email';
+    return 'fa fa-envelope';
   }
 
   /**
@@ -47,6 +50,16 @@ export default class EmailAction extends Struct {
     // return object of views
     return {
       config : 'action/email/config',
+    };
+  }
+
+  /**
+   * returns object of views
+   */
+  get actions() {
+    // return object of views
+    return {
+      run : this.runAction,
     };
   }
 
@@ -73,7 +86,36 @@ export default class EmailAction extends Struct {
    * @param action 
    * @param data 
    */
-  async run({ req, dashup }, action, data) {
-    // @todo run txt
+  async runAction(opts, action, data) {
+    // send
+    if (!action.to) return;
+
+    // template
+    const toTemplate = handlebars.compile(action.to);
+
+    // replace with data
+    const to = toTemplate(data || {});
+
+    // template
+    const subjectTemplate = handlebars.compile(action.subject);
+
+    // subject
+    const subject = subjectTemplate(data || {});
+
+    // get to
+    const actualTo = to.split(',').map((item) => item && item.trim().length ? item.trim() : null).filter((f) => f);
+
+    // check to
+    if (!actualTo.length) return { 
+      data,
+    };
+
+    // send
+    this.dashup.send(actualTo, subject, action.body, data);
+
+    // return data
+    return {
+      data,
+    };
   }
 }
