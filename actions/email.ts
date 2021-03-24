@@ -1,7 +1,7 @@
 
 // import connect interface
 import handlebars from 'handlebars';
-import { Struct } from '@dashup/module';
+import { Struct, Query } from '@dashup/module';
 
 /**
  * build address helper
@@ -88,7 +88,9 @@ export default class EmailAction extends Struct {
    */
   async runAction(opts, action, data) {
     // send
-    if (!action.to) return;
+    if (!action.to) return {
+      data,
+    };
 
     // template
     const toTemplate = handlebars.compile(action.to);
@@ -110,8 +112,26 @@ export default class EmailAction extends Struct {
       data,
     };
 
+    // get page
+    const page = await new Query({
+      struct : 'email',
+    }, 'page').findById(opts.page);
+
+    // check page
+    if (!page) return {
+      data,
+    };
+
+    // get connect
+    const connect = (page.get('connects') || []).find((c) => c.uuid === action.from);
+
+    // check page
+    if (!connect) return {
+      data,
+    };
+
     // send
-    this.dashup.send(actualTo, subject, action.body, data);
+    this.dashup.send(connect, actualTo, subject, action.body, data);
 
     // return data
     return {

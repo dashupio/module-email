@@ -15,14 +15,14 @@
     "@babel/plugin-transform-typescript": "^7.11.0",
     "@babel/preset-env": "^7.11.5",
     "@dashup/eslint-config-dashup": "0.0.1",
-    "@dashup/module": "^1.0.3",
+    "@dashup/module": "^1.0.9",
     "babel-plugin-add-module-exports": "^1.0.4",
     "fs-extra": "^9.0.1",
     "handlebars": "^4.7.6",
-    "html-to-text": "^5.1.1",
     "mjml": "^4.7.1",
-    "mustache.mjml": "^1.0.6",
-    "nodemailer": "^6.4.14",
-    "nodemailer-mailgun-transport": "^2.0.1"
+    "mustache.mjml": "^1.0.6"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^9.0.8"
   }
 }

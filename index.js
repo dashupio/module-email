@@ -1,9 +1,6 @@
 // require first
 const fs         = require('fs-extra');
-const transport  = require('nodemailer-mailgun-transport');
 const mjml2html  = require('mustache.mjml');
-const nodemailer = require('nodemailer');
-const htmlToText = require('html-to-text');
 const { Module } = require('@dashup/module');
 
 // import base
@@ -12,7 +9,7 @@ const EmailAction = require('./actions/email');
 /**
  * export module
  */
-class PhoneModule extends Module {
+class EmailModule extends Module {
 
   /**
    * construct discord module
@@ -20,17 +17,7 @@ class PhoneModule extends Module {
   constructor() {
     // run super
     super();
-
-    // connect discord
-    this.building.then(() => {
-      // Build mailer
-      this.mailer = nodemailer.createTransport(transport({
-        auth : {
-          domain  : this.config.domain,
-          api_key : this.config.apiKey,
-        }
-      }));
-    });
+    
   }
   
   /**
@@ -50,7 +37,7 @@ class PhoneModule extends Module {
    * @param from 
    * @param text 
    */
-  async send(to, subject, body, data) {
+  async send(connect, to, subject, body, data) {
     // Make sure addresses is array
     if (!Array.isArray(to)) to = [to];
 
@@ -59,43 +46,18 @@ class PhoneModule extends Module {
 
     // template with data
     const email = template(data);
-
-    // Options
-    const options = {
+        
+    // submit form
+    return await this.connection.action({
+      type   : 'connect',
+      struct : connect.type,
+    }, 'send', connect, {
       to,
-      from : this.config.from,
-      html : email,
-      text : htmlToText.fromString(email, {
-        wordwrap : 130,
-      }),
-      subject : subject,
-    };
-
-    // info
-    let info = null;
-
-    // Run try/catch
-    try {
-      // Send mail with defined transport object
-      info = await new Promise((resolve, reject) => {
-        // Send mail
-        this.mailer.sendMail(options, (err, data) => {
-          // Check error
-          if (err) return reject(err);
-
-          // Resolve
-          return resolve(data);
-        });
-      });
-    } catch (e) {
-      // log error
-      console.log(e);
-    }
-
-    // Return email
-    return info;
+      subject, 
+      body : email,
+    });
   }
 }
 
 // create new
-module.exports = new PhoneModule();
+module.exports = new EmailModule();

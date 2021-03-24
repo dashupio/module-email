@@ -8,6 +8,16 @@
       { props.getAction(props.action).title }
     </div>
     <div class="card-body">
+      <a if={ !getEmail().length } href="#!" class="d-block alert alert-info mb-3" onclick={ (e) => props.onConfig(e) }>
+        <i class="fa fa-exclamation-triangle mr-2" />
+        Please select an <b>email</b> for this action.
+      </a>
+      <div if={ getEmail().length } class="mb-3">
+        <label class="form-label">
+          Email Sender
+        </label>
+        <eden-select ref={ ref('from') } placeholder="Select Email" data={ getEmail() } on-change={ (e) => onChange(e) } />
+      </div>
       <div class="mb-3">
         <label class="form-label">
           Email Recipient(s)
@@ -45,8 +55,23 @@
         // set element
         this.props.set({
           to      : this.$('[ref="to"]').value,
+          from    : this.refs.from.val(),
           body    : this.refs.body.val(),
           subject : this.$('[ref="subject"]').value,
+        });
+      }
+
+      /**
+       * get email data
+       */
+      getEmail() {
+        // return emails
+        return [...(this.props.page.get('connects') || [])].filter((e) => e.email).map((connect) => {
+          return {
+            text     : connect.email,
+            value    : connect.uuid,
+            selected : this.props.action.from === connect.uuid,
+          }
         });
       }
 
