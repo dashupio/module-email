@@ -1,7 +1,7 @@
 // require first
-const fs         = require('fs-extra');
-const mjml2html  = require('mustache.mjml');
-const { Module } = require('@dashup/module');
+const fs        = require('fs-extra');
+const mjml2html = require('mustache.mjml');
+const { Module, Model, Query } = require('@dashup/module');
 
 // import base
 const EmailAction = require('./actions/email');
@@ -37,7 +37,7 @@ class EmailModule extends Module {
    * @param from 
    * @param text 
    */
-  async send(connect, to, subject, body, data) {
+  async send(opts, connect, { to, user, item, subject, body, data }) {
     // Make sure addresses is array
     if (!Array.isArray(to)) to = [to];
 
@@ -46,6 +46,42 @@ class EmailModule extends Module {
 
     // template with data
     const email = template(data);
+
+    // create event
+    if (opts && opts.page && item) {
+      // page/form
+      const page = await new Query(opts, 'page').findById(opts.page);
+      const form = page && page.get('data.event.form') && await new Query(opts, 'page').findById(page.get('data.event.form'));
+
+      // check type
+      if (page && form && page.get('data.event')) {
+        // get fields
+        const fields = {};
+        ['type', 'item', 'body', 'user', 'title'].forEach((field) => {
+          // set field
+          fields[field] = (form.get('data.fields') || []).find((f) => f.uuid === page.get(`data.event.${field}`));
+        });
+
+        // create email event
+        const event = new Model({
+          
+        }, 'model');
+
+        // fields
+        if (fields.type) event.set(fields.type.name || fields.type.uuid, 'email:outbound');
+        if (fields.item) event.set(fields.item.name || fields.item.uuid, item);
+        if (fields.body) event.set(fields.body.name || fields.body.uuid, `<b>Subject:</b> ${subject}<br />${body}`);
+        if (fields.user) event.set(fields.user.name || fields.user.uuid, user);
+        if (fields.title) event.set(fields.title.name || fields.title.uuid, `Sent email from ${connect.email} to ${to}`);
+
+        // save event
+        event.save({
+          form  : page.get('data.event.form'),
+          page  : page.get('data.event.model'),
+          model : page.get('data.event.model'),
+        });
+      }
+    }
         
     // submit form
     return await this.connection.action({

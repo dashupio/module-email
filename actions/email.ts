@@ -1,5 +1,6 @@
 
 // import connect interface
+import Bottleneck from 'bottleneck';
 import handlebars from 'handlebars';
 import { Struct, Query } from '@dashup/module';
 
@@ -17,6 +18,7 @@ export default class EmailAction extends Struct {
 
     // run listen
     this.runAction = this.runAction.bind(this);
+    this.bulkAction = this.bulkAction.bind(this);
   }
 
   /**
@@ -59,7 +61,8 @@ export default class EmailAction extends Struct {
   get actions() {
     // return object of views
     return {
-      run : this.runAction,
+      run  : this.runAction,
+      bulk : this.bulkAction,
     };
   }
 
@@ -131,11 +134,96 @@ export default class EmailAction extends Struct {
     };
 
     // send
-    this.dashup.send(connect, actualTo, subject, action.body, data);
+    this.dashup.send(opts, connect, {
+      to   : actualTo,
+      item : data.item && data.item._id,
+      user : data.user || opts.user,
+      body : action.body,
+      data,
+      subject,
+    });
 
     // return data
     return {
       data,
+    };
+  }
+
+  
+
+  /**
+   * bulk action
+   *
+   * @param opts 
+   * @param connect 
+   * @param param2 
+   */
+  async bulkAction(opts, connect, { user, body, subject, query }) {
+    // load form
+    const [page, form] = await new Query(opts, 'page').findByIds([opts.page, opts.form]);
+
+    // check page
+    if (!page) return;
+
+    // get fields
+    const emailField = (form.get('data.fields') || []).find((f) => f.uuid === page.get('data.field.email'));
+
+    // get query
+    const getQuery = () => {
+       // check id
+      let actualQuery = new Query({
+        type   : 'connect',
+        page   : opts.page,
+        model  : page.get('data.model'),
+        struct : 'gmail',
+      }, 'model');
+
+      // loop
+      query.forEach(([fn, val]) => {
+        // query
+        actualQuery = actualQuery[fn](...val);
+      });
+
+      // return actual query
+      return actualQuery;
+    };
+
+    // count
+    const count = await getQuery().count();
+
+    // template
+    const subjectTemplate = handlebars.compile(subject);
+
+    // create limiter
+    const limiter = new Bottleneck({
+      minTime       : 250,
+      maxConcurrent : 25,
+    });
+
+    // create schedule
+    const items = await getQuery().find();
+
+    // for each
+    items.forEach((item) => {
+      // schedule
+      limiter.schedule(() => {
+        // send
+        return this.dashup.send({
+          ...opts,
+        }, connect, {
+          body,
+          to      : [item.get(emailField.name || emailField.uuid)],
+          data    : item.sanitise(),
+          user    : user || opts.user,
+          item    : item.get('_id'),
+          subject : subjectTemplate(item.sanitise()),
+        });
+      });
+    });
+
+    // count
+    return {
+      count,
     };
   }
 }

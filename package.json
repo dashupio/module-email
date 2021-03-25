@@ -17,6 +17,7 @@
     "@dashup/eslint-config-dashup": "0.0.1",
     "@dashup/module": "^1.0.9",
     "babel-plugin-add-module-exports": "^1.0.4",
+    "bottleneck": "^2.19.5",
     "fs-extra": "^9.0.1",
     "handlebars": "^4.7.6",
     "mjml": "^4.7.1",
