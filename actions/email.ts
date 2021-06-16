@@ -51,7 +51,7 @@ export default class EmailAction extends Struct {
   get views() {
     // return object of views
     return {
-      config : 'action/email/config',
+      config : 'action/email',
     };
   }
 
