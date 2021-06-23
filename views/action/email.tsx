@@ -1,7 +1,7 @@
 
 import React from 'react';
-import Select from 'react-select';
 import { Alert } from 'react-bootstrap';
+import { Select } from '@dashup/ui';
 
 // create email
 const ActionEmail = (props = {}) => {
