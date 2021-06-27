@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Alert } from 'react-bootstrap';
-import { Select } from '@dashup/ui';
+import { Select, View } from '@dashup/ui';
 
 // create email
 const ActionEmail = (props = {}) => {
@@ -57,7 +57,14 @@ const ActionEmail = (props = {}) => {
         <label className="form-label">
           Email Body
         </label>
-        EDITOR
+        <View
+          type="page"
+          view="wysiwyg"
+          struct="form"
+
+          value={ props.action.body || '' }
+          onChange={ (v) => setAction('body', v) }
+        />
       </div>
     </>
   );
