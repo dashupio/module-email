@@ -42,7 +42,7 @@ export default class EmailAction extends Struct {
    */
   get icon() {
     // return connect icon label
-    return 'fa fa-envelope';
+    return 'fad fa-envelope';
   }
 
   /**
@@ -79,7 +79,7 @@ export default class EmailAction extends Struct {
    */
   get description() {
     // return description string
-    return 'Email Action';
+    return 'Send Email(s)';
   }
 
   /**
